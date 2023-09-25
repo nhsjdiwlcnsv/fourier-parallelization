@@ -114,3 +114,34 @@ Image &Image::colorMask(float r, float g, float b) {
     return *this;
 }
 
+Image &Image::stdConvolveClampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_h, const double *ker, uint32_t cr, uint32_t cc) {
+    uint8_t new_data[w * h];
+    uint64_t center = cr * ker_w + cc;
+
+    for (uint64_t k = channel; k < size; k += channels) {
+        double sum = 0;
+
+        for (long i = -((long) cr); i < (long) ker_h - cr; ++i) {
+            long row = ((long) k / channels) / w - i;
+            if (row < 0 || row > h - 1)
+                continue;
+
+            for (long j = -((long) cc); j < (long) ker_w - cc; ++j) {
+                long col = ((long) k / channels) % w - j;
+                if (col < 0 || col > w - 1)
+                    continue;
+
+                sum += ker[center + i * (long) ker_w + j] * data[(row * w + col) * channels + channel];
+            }
+        }
+
+        new_data[k / channels] = (uint8_t)(round(sum));
+    }
+
+    for (uint64_t k = channel; k < size; k += channels)
+        data[k] = new_data[k / channels];
+
+
+    return *this;
+}
+
