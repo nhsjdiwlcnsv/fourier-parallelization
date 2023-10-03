@@ -28,9 +28,9 @@ struct Image {
     ~Image();
 
     bool read(const char *filename);
-    bool write (const char *filename);
+    bool write (const char *filename) const;
 
-    ImageType getFileType(const char *filename);
+    static ImageType getFileType(const char *filename);
 
     Image &grayscaleAvg();
     Image &grayscaleLum();

@@ -28,19 +28,19 @@ int main() {
             -1, 0, 1
     };
 
-    test.stdConvolveClampTo0(0, 3, 3, canny_v, 1, 1);
-    test.stdConvolveClampTo0(1, 3, 3, canny_v, 1, 1);
-    test.stdConvolveClampTo0(2, 3, 3, canny_v, 1, 1);
+//    test.stdConvolveClampTo0(0, 3, 3, canny_v, 1, 1);
+//    test.stdConvolveClampTo0(1, 3, 3, canny_v, 1, 1);
+//    test.stdConvolveClampTo0(2, 3, 3, canny_v, 1, 1);
 
     test.stdConvolveClampTo0(0, 3, 3, canny_h, 1, 1);
     test.stdConvolveClampTo0(1, 3, 3, canny_h, 1, 1);
     test.stdConvolveClampTo0(2, 3, 3, canny_h, 1, 1);
 
     test.grayscaleLum();
-
-    test.stdConvolveClampTo0(0, 5, 5, gaussian, 2, 2);
-    test.stdConvolveClampTo0(1, 5, 5, gaussian, 2, 2);
-    test.stdConvolveClampTo0(2, 5, 5, gaussian, 2, 2);
+//
+//    test.stdConvolveClampTo0(0, 5, 5, gaussian, 2, 2);
+//    test.stdConvolveClampTo0(1, 5, 5, gaussian, 2, 2);
+//    test.stdConvolveClampTo0(2, 5, 5, gaussian, 2, 2);
 
     test.write("/Users/mishashkarubski/CLionProjects/Fourier/filtered4.png");
 
