@@ -3,8 +3,6 @@
 #include "Image.h"
 
 int main() {
-    Image test("/Users/mishashkarubski/CLionProjects/Fourier/lenna.png");
-
     double emboss[] = {
             -2 / 9.0, -1 / 9.0, 0.0,
             -1 / 9.0, 1 / 9.0, 1 / 9.0,
@@ -28,21 +26,24 @@ int main() {
             -1, 0, 1
     };
 
-//    test.stdConvolveClampTo0(0, 3, 3, canny_v, 1, 1);
-//    test.stdConvolveClampTo0(1, 3, 3, canny_v, 1, 1);
-//    test.stdConvolveClampTo0(2, 3, 3, canny_v, 1, 1);
+    Image test("/Users/mishashkarubski/CLionProjects/Fourier/public/lenna.png");
+    Filter canny_h_1(canny_h, 3, 3, 1, 1);
 
-    test.stdConvolveClampTo0(0, 3, 3, canny_h, 1, 1);
-    test.stdConvolveClampTo0(1, 3, 3, canny_h, 1, 1);
-    test.stdConvolveClampTo0(2, 3, 3, canny_h, 1, 1);
+    test.stdConvolveClampTo0(0, 3, 3, canny_v, 1, 1);
+    test.stdConvolveClampTo0(1, 3, 3, canny_v, 1, 1);
+    test.stdConvolveClampTo0(2, 3, 3, canny_v, 1, 1);
+
+    test.stdConvolveClampTo0(0, canny_h_1);
+    test.stdConvolveClampTo0(1, canny_h_1);
+    test.stdConvolveClampTo0(2, canny_h_1);
 
     test.grayscaleLum();
-//
-//    test.stdConvolveClampTo0(0, 5, 5, gaussian, 2, 2);
-//    test.stdConvolveClampTo0(1, 5, 5, gaussian, 2, 2);
-//    test.stdConvolveClampTo0(2, 5, 5, gaussian, 2, 2);
 
-    test.write("/Users/mishashkarubski/CLionProjects/Fourier/filtered4.png");
+    test.stdConvolveClampTo0(0, 5, 5, gaussian, 2, 2);
+    test.stdConvolveClampTo0(1, 5, 5, gaussian, 2, 2);
+    test.stdConvolveClampTo0(2, 5, 5, gaussian, 2, 2);
+
+    test.write("/Users/mishashkarubski/CLionProjects/Fourier/public/filtered.png");
 
     return 0;
 }

@@ -10,4 +10,8 @@ add_executable(
         stb_image_write.h
         Image.h
         Image.cpp
+        Filter.cpp
+        Filter.h
+        Filter.h
+        filters.h
 )

@@ -125,7 +125,14 @@ Image &Image::colorMask(float r, float g, float b) {
     return *this;
 }
 
-Image &Image::stdConvolveClampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_h, const double *ker, uint32_t cr, uint32_t cc) {
+Image &Image::stdConvolveClampTo0(
+        uint8_t channel,
+        uint32_t ker_w,
+        uint32_t ker_h,
+        const double *ker,
+        uint32_t cr,
+        uint32_t cc
+        ) {
     uint8_t new_data[w * h]; // new data for a single image channel
     uint64_t center = cr * ker_w + cc; // flattened coordinate of kernel center
 
@@ -150,6 +157,41 @@ Image &Image::stdConvolveClampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_
                     continue;
 
                 sum += ker[center + i * (long) ker_w + j] * data[(row_offset * w + col_offset) * channels + channel];
+            }
+        }
+
+        new_data[k / channels] = (uint8_t)(round(sum));
+    }
+
+    for (uint64_t k = channel; k < size; k += channels)
+        data[k] = new_data[k / channels];
+
+
+    return *this;
+}
+
+Image &Image::stdConvolveClampTo0(uint8_t channel, const Filter& fltr) {
+    uint8_t new_data[w * h];
+    uint64_t center = fltr.cr * fltr.w + fltr.cc;
+
+    for (uint64_t k = channel; k < size; k += channels) {
+        double sum = 0;
+
+        for (long i = -((long) fltr.cr); i < (long) fltr.h - fltr.cr; ++i) {
+            long row = ((long) k / channels) / w;
+            long row_offset = row - i;
+
+            if (row_offset < 0 || row_offset > h - 1)
+                continue;
+
+            for (long j = -((long) fltr.cc); j < (long) fltr.w - fltr.cc; ++j) {
+                long col = ((long) k / channels) % w;
+                long col_offset = col - j;
+
+                if (col_offset < 0 || col_offset > w - 1)
+                    continue;
+
+                sum += fltr.data[center + i * (long) fltr.w + j] * data[(row_offset * w + col_offset) * channels + channel];
             }
         }
 

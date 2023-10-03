@@ -2,6 +2,7 @@
 // Created by Mikhail Shkarubski on 17.09.23.
 //
 #include <iostream>
+#include "Filter.h"
 
 #ifndef FOURIER_IMAGE_H
 #define FOURIER_IMAGE_H
@@ -35,7 +36,15 @@ struct Image {
     Image &grayscaleAvg();
     Image &grayscaleLum();
     Image &colorMask(float r, float g, float b);
-    Image &stdConvolveClampTo0(uint8_t channel, uint32_t ker_w, uint32_t ker_h, const double *ker, uint32_t cr, uint32_t cc);
+    Image &stdConvolveClampTo0(
+            uint8_t channel,
+            uint32_t ker_w,
+            uint32_t ker_h,
+            const double *ker,
+            uint32_t cr,
+            uint32_t cc
+            );
+    Image &stdConvolveClampTo0(uint8_t channel, const Filter& fltr);
 };
 
 
