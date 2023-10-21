@@ -27,6 +27,8 @@ int main() {
     };
 
     Image test("/Users/mishashkarubski/CLionProjects/Fourier/public/lenna.png");
+    test.grayscaleLum();
+
     Filter canny_h_1(canny_h, 3, 3, 1, 1);
 
     test.stdConvolveClampTo0(0, 3, 3, canny_v, 1, 1);
@@ -36,8 +38,6 @@ int main() {
     test.stdConvolveClampTo0(0, canny_h_1);
     test.stdConvolveClampTo0(1, canny_h_1);
     test.stdConvolveClampTo0(2, canny_h_1);
-
-    test.grayscaleLum();
 
     test.stdConvolveClampTo0(0, 5, 5, gaussian, 2, 2);
     test.stdConvolveClampTo0(1, 5, 5, gaussian, 2, 2);

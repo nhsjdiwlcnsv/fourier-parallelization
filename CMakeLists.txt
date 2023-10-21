@@ -13,5 +13,6 @@ add_executable(
         Filter.cpp
         Filter.h
         Filter.h
-        filters.h
+        AlexNet.h
+        AlexNet.cpp
 )
