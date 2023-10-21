@@ -1,18 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
-project(Fourier)
+
+project(fourier_parallelization)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(
-        Fourier
-        main.cpp
-        stb_image.h
-        stb_image_write.h
-        Image.h
-        Image.cpp
-        Filter.cpp
-        Filter.h
-        Filter.h
-        AlexNet.h
-        AlexNet.cpp
-)
+add_executable(fourier_parallelization main.cpp AlexNet.h AlexNet.cpp)
