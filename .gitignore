@@ -35,6 +35,7 @@
 # User-specific stuff:
 .idea
 .DS_STORE
+opencv
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/dictionaries

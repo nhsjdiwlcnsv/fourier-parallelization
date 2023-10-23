@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <chrono>
+#include "opencv/include/opencv2/opencv.hpp"
 
 #define freqMat std::vector<std::vector<std::complex<double>>>
 #define freqVec std::vector<std::complex<double>>
