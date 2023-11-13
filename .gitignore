@@ -45,6 +45,7 @@ build
 .idea/jsLibraryMappings.xml
 *.png
 *.jpg
+*.jpeg
 *.tga
 *.bmp
 *.pdf

@@ -8,12 +8,14 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        AlexNet.cpp
-        AlexNet.h
-        fft.cpp
-        fft.h
-        fftparallel.cpp
-        fftparallel.h
+        nn/AlexNet.cpp
+        nn/AlexNet.h
+        functional/fft.cpp
+        functional/fft.h
+        functional/fftparallel.cpp
+        functional/fftparallel.h
+        functional/tools.cpp
+        functional/tools.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC metal-cpp/)

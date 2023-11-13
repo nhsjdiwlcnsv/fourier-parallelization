@@ -10,8 +10,8 @@
 //#define MTK_PRIVATE_IMPLEMENTATION
 //#define CA_PRIVATE_IMPLEMENTATION
 
-#include <Metal/Metal.hpp>
-#include <Foundation/Foundation.hpp>
-#include <QuartzCore/QuartzCore.hpp>
+#include "Metal/Metal.hpp"
+#include "Foundation/Foundation.hpp"
+#include "QuartzCore/QuartzCore.hpp"
 
 #endif //FOURIER_PARALLELIZATION_FFTPARALLEL_H
