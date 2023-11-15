@@ -3,7 +3,7 @@
 //
 #include "tools.hpp"
 
-void print(FT::CImage& matrix, bool real) {
+void print(const FT::CImage& matrix, const bool real) {
     for (const auto& row : matrix) {
         for (const auto& element : row)
             std::cout << (real ? (double) element.real() : (double) element.imag()) << " ";

@@ -12,13 +12,12 @@ add_executable(${PROJECT_NAME}
         nn/AlexNet.h
         functional/fft.cpp
         functional/fft.hpp
-        functional/fftparallel.cpp
-        functional/fftparallel.hpp
         functional/tools.cpp
         functional/tools.hpp
         metals/MetalFFT.cpp
         metals/MetalFFT.hpp
         functional/types.hpp
+        functional/fft.metal
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})
@@ -33,4 +32,10 @@ target_link_libraries(fourier-parallelization
         "-framework Metal"
         "-framework Foundation"
         "-framework QuartzCore"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+        COMMAND xcrun -sdk macosx metal -c ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.metal -o ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.air
+        COMMAND xcrun -sdk macosx metallib ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.air -o ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.metallib
+        COMMENT "Building .metallib file"
 )

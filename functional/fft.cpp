@@ -4,7 +4,9 @@
 
 #include "fft.hpp"
 
-void fft(FT::CArray& x, const bool inverse) {
+// ========================= NAMESPACE SERIAL (SRL) =========================
+
+void SR::fft(FT::CArray& x, const bool inverse) {
     const int N = x.size();
     const double THETA = (inverse ? 2.0 : -2.0) * M_PI / N;
 
@@ -29,7 +31,7 @@ void fft(FT::CArray& x, const bool inverse) {
     }
 }
 
-void fftshift(FT::CArray& x) {
+void SR::fftshift(FT::CArray& x) {
     const int N = x.size();
     const int halfN = N / 2;
 
@@ -39,7 +41,7 @@ void fftshift(FT::CArray& x) {
     x[std::slice(halfN, N, 1)] = temp;
 }
 
-void fft2d(FT::CImage& image, const bool inverse) {
+void SR::fft2d(FT::CImage& image, const bool inverse) {
     // Apply FFT along rows
     for (auto &image_row: image) {
         FT::CArray row(image_row.data(), image_row.size());
@@ -61,7 +63,7 @@ void fft2d(FT::CImage& image, const bool inverse) {
     }
 }
 
-void fftshift2d(FT::CImage& image) {
+void SR::fftshift2d(FT::CImage& image) {
     const int rows = image.size(),
               cols = image[0].size();
 
@@ -83,27 +85,7 @@ void fftshift2d(FT::CImage& image) {
     }
 }
 
-cv::Mat pad(cv::Mat& input, int rows, int cols, int value) {
-    CV_Assert(rows >= input.rows && cols >= input.cols);
-
-    int topPad = (rows - input.rows) / 2,
-        leftPad = (cols - input.cols) / 2;
-
-    cv::Mat paddedImage(rows, cols, input.type(), cv::Scalar(value));
-    input.copyTo(paddedImage(cv::Rect(leftPad, topPad, input.cols, input.rows)));
-
-    return paddedImage;
-}
-
-cv::Mat roi(cv::Mat& src, int x, int y, int width, int height) {
-    CV_Assert(width <= src.cols && height <= src.rows);
-    CV_Assert(x > 0 && x <= src.cols && y > 0 && y <= src.rows);
-
-    cv::Rect roi(x, y, width, height);
-    return src(roi);
-}
-
-cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel) {
+cv::Mat SR::conv2d(cv::Mat& image, cv::Mat& kernel) {
     CV_Assert(image.channels() == 1 && kernel.channels() == 1);
 
     cv::Mat result(image.size(), image.type(), cv::Scalar(0));
@@ -126,7 +108,7 @@ cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel) {
     return result;
 }
 
-cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+cv::Mat SR::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     CV_Assert(image.channels() == 1 && kernel.channels() == 1);
 
     // Pad the image and kernel to the nearest power of 2 for FFT
@@ -146,7 +128,7 @@ cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     MatToCImage(padImage, fftImage);    MatToCImage(padKernel, fftKernel);
 
     fft2d(fftImage, false);             fft2d(fftKernel, false);
-    // fftshift2d(fftImage);               fftshift2d(fftKernel);
+    // fftshift2d(fftImage);                     fftshift2d(fftKernel);
 
 
     // Element-wise multiplication in frequency domain
@@ -164,4 +146,77 @@ cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     result = roi(result, (padCols - image.cols) / 2, (padRows - image.rows) / 2, image.cols, image.rows);
 
     return result;
+}
+
+cv::Mat pad(cv::Mat& input, int rows, int cols, int value) {
+    CV_Assert(rows >= input.rows && cols >= input.cols);
+
+    const int topPad = (rows - input.rows) / 2,
+              leftPad = (cols - input.cols) / 2;
+
+    cv::Mat paddedImage(rows, cols, input.type(), cv::Scalar(value));
+    input.copyTo(paddedImage(cv::Rect(leftPad, topPad, input.cols, input.rows)));
+
+    return paddedImage;
+}
+
+cv::Mat roi(cv::Mat& src, const int x, const int y, const int width, const int height) {
+    CV_Assert(width <= src.cols && height <= src.rows);
+    CV_Assert(x > 0 && x <= src.cols && y > 0 && y <= src.rows);
+
+    const cv::Rect roi(x, y, width, height);
+    return src(roi);
+}
+
+
+// ========================= NAMESPACE METAL (MTL) =========================
+
+void MT::fft(FT::CVector& x, const bool inverse) {
+    const int N = x.size();
+    const double THETA = (inverse ? 2.0 : -2.0) * M_PI / N;
+
+    if (N <= 1)
+        return;
+
+    MTL::Device *device = MTL::CreateSystemDefaultDevice();
+    MetalFFT* metal_fft = new MetalFFT(device, N);
+
+    metal_fft->loadData(x, metal_fft->_mBufferX);
+    metal_fft->executeFunction();
+}
+
+void MT::fftshift(FT::CArray& x) {
+}
+
+void MT::fft2d(FT::CImage& image, bool inverse) {
+}
+
+void MT::fftshift2d(FT::CImage& image) {
+}
+
+cv::Mat MT::conv2d(cv::Mat& image, cv::Mat& kernel) {
+}
+
+cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+}
+
+
+// ========================= NAMESPACE OpenMP (OMP) =========================
+
+void OMP::fft(FT::CArray& x, bool inverse) {
+}
+
+void OMP::fftshift(FT::CArray& x) {
+}
+
+void OMP::fft2d(FT::CImage& image, bool inverse) {
+}
+
+void OMP::fftshift2d(FT::CImage& image) {
+}
+
+cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
+}
+
+cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 }
