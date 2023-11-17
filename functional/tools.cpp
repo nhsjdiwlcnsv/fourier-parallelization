@@ -3,16 +3,18 @@
 //
 #include "tools.hpp"
 
-void print(const FT::CImage& matrix, const bool real) {
+void print(const FT::DCImage& matrix, const int mode) {
+    assert(mode == REAL_ONLY || mode == IMAG_ONLY || mode == REAL_IMAG);
+
     for (const auto& row : matrix) {
         for (const auto& element : row)
-            std::cout << (real ? (double) element.real() : (double) element.imag()) << " ";
+            std::cout << (mode == 0 ? element.real() : mode == 1 ? element.imag() : element) << " ";
 
         std::cout << '\n';
     }
 }
 
-void MatToCImage(cv::Mat& src, FT::CImage& dst) {
+void MatToCImage(cv::Mat& src, FT::DCImage& dst) {
     CV_Assert(!src.empty() && !dst.empty());
     CV_Assert(src.rows == dst.size() && src.cols == dst[0].size());
 
@@ -23,7 +25,7 @@ void MatToCImage(cv::Mat& src, FT::CImage& dst) {
             dst[i][j] = src.at<double>(i, j);
 }
 
-void CImageToMat(FT::CImage& src, cv::Mat& dst) {
+void CImageToMat(FT::DCImage& src, cv::Mat& dst) {
     CV_Assert(!src.empty() && !dst.empty());
     CV_Assert(src.size() == dst.rows && src[0].size() == dst.cols);
 
@@ -34,8 +36,8 @@ void CImageToMat(FT::CImage& src, cv::Mat& dst) {
             dst.at<double>(i, j) = src[i][j].real();
 }
 
-FT::CImage gaussian(double mean, double std, int size) {
-    FT::CImage gaussian(size, FT::CVector(size));
+FT::DCImage gaussian(double mean, double std, int size) {
+    FT::DCImage gaussian(size, FT::DCVector(size));
 
     const double exp_coef             = 1.0 / sqrt(2.0 * M_PI * std * std);
     const double exp_pd               = -1.0 / (2.0 * std * std);
@@ -47,7 +49,7 @@ FT::CImage gaussian(double mean, double std, int size) {
             double x = pow(j - mean, 2),
                    y = pow(i - mean, 2);
 
-            gaussian[i][j] = FT::Complex(exp_coef * exp(exp_pd * (x + y)), 0);
+            gaussian[i][j] = FT::DComplex(exp_coef * exp(exp_pd * (x + y)), 0);
             sum += gaussian[i][j].real();
         }
     }

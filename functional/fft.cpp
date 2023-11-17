@@ -6,20 +6,23 @@
 
 // ========================= NAMESPACE SERIAL (SRL) =========================
 
-void SR::fft(FT::CArray& x, const bool inverse) {
-    const int N = x.size();
-    const double THETA = (inverse ? 2.0 : -2.0) * M_PI / N;
+void SR::fft(FT::DCArray& x, const bool inverse) {
+    const auto N = x.size();
 
     if (N <= 1)
         return;
 
-    FT::CArray even = x[std::slice(0, N / 2, 2)],
-               odd = x[std::slice(1, N / 2, 2)];
+    const double THETA = (inverse ? 2.0 : -2.0) * M_PI / static_cast<double>(N);
+
+    FT::DCArray even = x[std::slice(0, N / 2, 2)],
+                odd = x[std::slice(1, N / 2, 2)];
 
     fft(even, inverse);     fft(odd, inverse);
 
+    x = FT::DCArray(N);
+
     for (int k = 0; k < N / 2; ++k) {
-        FT::Complex t = std::polar(1.0, THETA * k) * odd[k];
+        FT::DComplex t = std::polar(1.0, THETA * k) * odd[k];
 
         x[k] = even[k] + t;
         x[k + N / 2] = even[k] - t;
@@ -31,20 +34,20 @@ void SR::fft(FT::CArray& x, const bool inverse) {
     }
 }
 
-void SR::fftshift(FT::CArray& x) {
-    const int N = x.size();
-    const int halfN = N / 2;
+void SR::fftshift(FT::DCArray& x) {
+    const auto N = x.size();
+    const auto halfN = N / 2;
 
-    FT::CArray temp(halfN);
+    FT::DCArray temp(halfN);
     temp = x[std::slice(0, halfN, 1)];
     x[std::slice(0, halfN, 1)] = x[std::slice(halfN, N, 1)];
     x[std::slice(halfN, N, 1)] = temp;
 }
 
-void SR::fft2d(FT::CImage& image, const bool inverse) {
+void SR::fft2d(FT::DCImage& image, const bool inverse) {
     // Apply FFT along rows
     for (auto &image_row: image) {
-        FT::CArray row(image_row.data(), image_row.size());
+        FT::DCArray row(image_row.data(), image_row.size());
         fft(row, inverse);
 
         for (size_t j = 0; j < image_row.size(); ++j)
@@ -52,7 +55,7 @@ void SR::fft2d(FT::CImage& image, const bool inverse) {
     }
 
     // Create temporary array to store columns
-    FT::CArray col(image.size());
+    FT::DCArray col(image.size());
     // Apply FFT along columns
     for (size_t i = 0; i < image.size(); ++i) {
         for (size_t j = 0; j < image[0].size(); ++j) col[j] = image[j][i];
@@ -63,19 +66,19 @@ void SR::fft2d(FT::CImage& image, const bool inverse) {
     }
 }
 
-void SR::fftshift2d(FT::CImage& image) {
-    const int rows = image.size(),
-              cols = image[0].size();
+void SR::fftshift2d(FT::DCImage& image) {
+    const auto rows = image.size(),
+               cols = image[0].size();
 
     for (int i = 0; i < rows; ++i) {
-        FT::CArray row(image[i].data(), cols);
+        FT::DCArray row(image[i].data(), cols);
         fftshift(row);
 
         for (size_t j = 0; j < cols; ++j)
             image[i][j] = row[j];
     }
 
-    FT::CArray col(rows);
+    FT::DCArray col(rows);
     for (int i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) col[j] = image[j][i];
         fftshift(col);
@@ -122,8 +125,8 @@ cv::Mat SR::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     cv::Mat padKernel = pad(kernel, padRows, padCols, 0);
 
     // Transform image and kernel to frequency domain
-    FT::CImage fftImage(padRows, FT::CVector(padCols));
-    FT::CImage fftKernel(padRows, FT::CVector(padCols));
+    FT::DCImage fftImage(padRows, FT::DCVector(padCols));
+    FT::DCImage fftKernel(padRows, FT::DCVector(padCols));
 
     MatToCImage(padImage, fftImage);    MatToCImage(padKernel, fftKernel);
 
@@ -171,52 +174,123 @@ cv::Mat roi(cv::Mat& src, const int x, const int y, const int width, const int h
 
 // ========================= NAMESPACE METAL (MTL) =========================
 
-void MT::fft(FT::CVector& x, const bool inverse) {
-    const int N = x.size();
-    const double THETA = (inverse ? 2.0 : -2.0) * M_PI / N;
+void MT::fft(FT::DCVector& x, const bool inverse) {
+    const auto N = x.size();
 
     if (N <= 1)
         return;
 
+    auto n_threads = N / 2;
+    auto thread_size = N / n_threads;
+
+    NS::Error *error = nullptr;
     MTL::Device *device = MTL::CreateSystemDefaultDevice();
-    MetalFFT* metal_fft = new MetalFFT(device, N);
+    MTL::CommandQueue *command_queue = device->newCommandQueue();
 
-    metal_fft->loadData(x, metal_fft->_mBufferX);
-    metal_fft->executeFunction();
-}
+    const NS::String* lib_path = NS::String::string(
+        "/Users/mishashkarubski/CLionProjects/fourier-parallelization/metal-library/library.metallib",
+        NS::ASCIIStringEncoding);
+    MTL::Library *library = device->newLibrary(lib_path, &error);
 
-void MT::fftshift(FT::CArray& x) {
-}
+    const NS::String* function_name = NS::String::string("fft", NS::ASCIIStringEncoding);
+    const MTL::Function *function = library->newFunction(function_name);
 
-void MT::fft2d(FT::CImage& image, bool inverse) {
-}
+    const MTL::ComputePipelineState *pipeline_state = device->newComputePipelineState(function, &error);
 
-void MT::fftshift2d(FT::CImage& image) {
-}
+    while (n_threads >= 1) {
+         FT::FCVector x_float(N);
 
-cv::Mat MT::conv2d(cv::Mat& image, cv::Mat& kernel) {
-}
+        for (int i = 0; i < n_threads; ++i)
+            for (int j = 0; j < thread_size; ++j)
+                x_float[i * thread_size + j] = x[i + j * n_threads];
 
-cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+        MTL::Buffer *x_buffer               = device->newBuffer(x_float.data(), N * sizeof(FT::FComplex), MTL::ResourceStorageModeShared);
+        MTL::Buffer *th_sz_buffer           = device->newBuffer(&thread_size, sizeof(size_t), MTL::ResourceStorageModeShared);
+        MTL::Buffer *inv_buffer             = device->newBuffer(&inverse, sizeof(bool), MTL::ResourceStorageModeShared);
+        MTL::Buffer *even_buffer            = device->newBuffer(n_threads * (thread_size / 2) * sizeof(FT::FComplex), MTL::ResourceStorageModeShared);
+        MTL::Buffer *odd_buffer             = device->newBuffer(n_threads * (thread_size / 2) * sizeof(FT::FComplex), MTL::ResourceStorageModeShared);
+
+        auto *command_buffer = command_queue->commandBuffer();
+        MTL::ComputeCommandEncoder *command_encoder = command_buffer->computeCommandEncoder();
+
+        command_encoder->setComputePipelineState(pipeline_state);
+
+        command_encoder->setBuffer(x_buffer, 0, 0);
+        command_encoder->setBuffer(th_sz_buffer, 0, 1);
+        command_encoder->setBuffer(inv_buffer, 0, 2);
+        command_encoder->setBuffer(even_buffer, 0, 3);
+        command_encoder->setBuffer(odd_buffer, 0, 4);
+
+        const MTL::Size threads_per_grid               = MTL::Size::Make(n_threads, 1, 1);
+        const NS::UInteger max_threads_per_group       = pipeline_state->maxTotalThreadsPerThreadgroup();
+        const MTL::Size threads_per_group              = MTL::Size::Make(max_threads_per_group, 1, 1);
+
+        command_encoder->dispatchThreads(threads_per_grid, threads_per_group);
+        command_encoder->endEncoding();
+
+        command_buffer->commit();
+        command_buffer->waitUntilCompleted();
+
+        const auto *x_ptr = static_cast<FT::FComplex*>(x_buffer->contents());
+
+        for (int i = 0; i < n_threads; ++i)
+            for (int j = 0; j < thread_size; ++j)
+                x[i + j * n_threads] = x_ptr[i * thread_size + j];
+
+        n_threads /= 2;
+        thread_size *= 2;
+    }
+
+    std::reverse(x.begin() + 1, x.end());
 }
+//
+// void MT::fftshift(FT::CArray& x) {
+// }
+//
+void MT::fft2d(FT::DCImage& image, bool inverse) {
+    // Apply FFT along rows
+    for (auto &image_row: image)
+        fft(image_row, inverse);
+
+    // Create temporary array to store columns
+    FT::DCVector col(image.size());
+
+    // Apply FFT along columns
+    for (size_t i = 0; i < image.size(); ++i) {
+        for (size_t j = 0; j < image[0].size(); ++j) col[j] = image[j][i];
+        fft(col, inverse);
+
+        for (size_t j = 0; j < image[0].size(); ++j)
+            image[j][i] = col[j];
+    }
+}
+//
+// void MT::fftshift2d(FT::CImage& image) {
+// }
+//
+// cv::Mat MT::conv2d(cv::Mat& image, cv::Mat& kernel) {
+// }
+//
+// cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+// }
 
 
 // ========================= NAMESPACE OpenMP (OMP) =========================
 
-void OMP::fft(FT::CArray& x, bool inverse) {
-}
-
-void OMP::fftshift(FT::CArray& x) {
-}
-
-void OMP::fft2d(FT::CImage& image, bool inverse) {
-}
-
-void OMP::fftshift2d(FT::CImage& image) {
-}
-
-cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
-}
-
-cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
-}
+// void OMP::fft(FT::CArray& x, bool inverse) {
+// }
+//
+// void OMP::fftshift(FT::CArray& x) {
+// }
+//
+// void OMP::fft2d(FT::CImage& image, bool inverse) {
+// }
+//
+// void OMP::fftshift2d(FT::CImage& image) {
+// }
+//
+// cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
+// }
+//
+// cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+// }

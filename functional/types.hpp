@@ -9,13 +9,19 @@
 #include <complex>
 #include <valarray>
 #include <vector>
-#include <chrono>
 
 namespace FT {
-    using Complex = std::complex<double>;
-    using CArray = std::valarray<Complex>;
-    using CVector = std::vector<Complex>;
-    using CImage = std::vector<CVector>;
+    using DComplex = std::complex<double>;
+    using DCArray = std::valarray<DComplex>;
+    using DCVector = std::vector<DComplex>;
+
+    using FComplex = std::complex<float32_t>;
+    using FCArray = std::valarray<FComplex>;
+    using FCVector = std::vector<FComplex>;
+
+    using DCImage = std::vector<DCVector>;
+    using FCImage = std::vector<FCVector>;
+
     using TimeUnit = std::chrono::milliseconds;
 }
 

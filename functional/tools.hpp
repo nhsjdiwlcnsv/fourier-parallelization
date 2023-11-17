@@ -10,6 +10,10 @@
 #include <iostream>
 #include "types.hpp"
 
+#define REAL_ONLY 0
+#define IMAG_ONLY 1
+#define REAL_IMAG 2
+
 template<typename T>
 void print(cv::Mat& matrix) {
     for (size_t i = 0; i < matrix.rows; ++i) {
@@ -20,9 +24,9 @@ void print(cv::Mat& matrix) {
     }
 }
 
-void print(FT::CImage & matrix, bool real);
-void CImageToMat(FT::CImage & src, cv::Mat& dst);
-void MatToCImage(cv::Mat& src, FT::CImage & dst);
-FT::CImage gaussian(double mean, double std, int size);
+void print(FT::DCImage & matrix, int mode);
+void CImageToMat(FT::DCImage & src, cv::Mat& dst);
+void MatToCImage(cv::Mat& src, FT::DCImage & dst);
+FT::DCImage gaussian(double mean, double std, int size);
 
 #endif //FOURIER_PARALLELIZATION_TOOLS_H

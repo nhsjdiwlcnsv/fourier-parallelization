@@ -52,20 +52,51 @@ int main() {
     // std::cout << "Naive convolution took " << duration_1.count() << "ms to execute." << std::endl;
     // std::cout << "FFT convolution took " << duration_2.count() << "ms to execute." << std::endl;
 
-    FT::CVector a = {255, 0, 11, 234, 123, 012, 200};
-    // MT::fft(a, false);
+    FT::DCArray a = {FT::DComplex(255, 144), FT::DComplex(0, 19), FT::DComplex(27, 29), FT::DComplex(234, 92), FT::DComplex(123, 0.12), FT::DComplex(012, 153), FT::DComplex(200, 83.123), FT::DComplex(182.989, 46.567)};
+    FT::DCVector b = {FT::DComplex(255, 144), FT::DComplex(0, 19), FT::DComplex(27, 29), FT::DComplex(234, 92), FT::DComplex(123, 0.12), FT::DComplex(012, 153), FT::DComplex(200, 83.123), FT::DComplex(182.989, 46.567)};
 
-    // print(a, true);
-    // print(a, false);
+    auto start1 = std::chrono::high_resolution_clock::now();
+    SR::fft(a, false);
+    auto end1 = std::chrono::high_resolution_clock::now();
+    auto start2 = std::chrono::high_resolution_clock::now();
+    MT::fft(b, false);
+    auto end2 = std::chrono::high_resolution_clock::now();
 
-    MTL::Device *device = MTL::CreateSystemDefaultDevice();
-    NS::Error *error = nullptr;
-    MTL::Library *defaultLibrary = device->newDefaultLibrary();
+    auto duration1 = std::chrono::duration_cast<FT::TimeUnit>(end1 - start1);
+    auto duration2 = std::chrono::duration_cast<FT::TimeUnit>(end2 - start2);
 
-    if (defaultLibrary == nullptr) {
-        std::cout << "Failed to find the default library." << '\n';
-        return 1;
-    }
+    std::cout << "SR::fft result: \n";
+    for (auto& val : a)
+    std::cout << val << " ";
+
+    std::cout << "\n\n";
+
+    std::cout << "MT::fft result: \n";
+    for (auto& val : b)
+        std::cout << val << " ";
+
+    std::cout << "\n\n";
+
+    std::cout << "Serial FFT took " << duration1.count() << "ms to execute." << std::endl;
+    std::cout << "GPU accelerated FFT took " << duration2.count() << "ms to execute." << std::endl;
+
+    // SR::fft(a, true);
+    // MT::fft(b, true);
+    //
+    // for (auto& val : a)
+    //     std::cout << val << " ";
+    //
+    // std::cout << "\n\n";
+    //
+    // for (auto& val : b)
+    //     std::cout << val << " ";
+
+    // FT::DCVector c = {FT::DComplex(0, 0), FT::DComplex(1, 0), FT::DComplex(2, 0), FT::DComplex(3, 0), FT::DComplex(4, 0), FT::DComplex(5, 0), FT::DComplex(6, 0), FT::DComplex(7, 0)};
+    //
+    // MT::fft(c, false);
+    //
+    // for (auto& val : c)
+    //     std::cout << val << " ";
 
     return 0;
 }

@@ -14,10 +14,7 @@ add_executable(${PROJECT_NAME}
         functional/fft.hpp
         functional/tools.cpp
         functional/tools.hpp
-        metals/MetalFFT.cpp
-        metals/MetalFFT.hpp
         functional/types.hpp
-        functional/fft.metal
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})
@@ -35,7 +32,7 @@ target_link_libraries(fourier-parallelization
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-        COMMAND xcrun -sdk macosx metal -c ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.metal -o ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.air
-        COMMAND xcrun -sdk macosx metallib ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.air -o ${CMAKE_CURRENT_SOURCE_DIR}/functional/fft.metallib
+        COMMAND xcrun -sdk macosx metal -c ${CMAKE_CURRENT_SOURCE_DIR}/metal-library/library.metal -o ${CMAKE_CURRENT_SOURCE_DIR}/metal-library/library.air
+        COMMAND xcrun -sdk macosx metallib ${CMAKE_CURRENT_SOURCE_DIR}/metal-library/library.air -o ${CMAKE_CURRENT_SOURCE_DIR}/metal-library/library.metallib
         COMMENT "Building .metallib file"
 )

@@ -7,31 +7,33 @@
 #define FOURIER_PARALLELIZATION_FFT_H
 
 #include "tools.hpp"
-#include "../metals/MetalFFT.hpp"
+#include <Metal/Metal.hpp>
+#include <Foundation/Foundation.hpp>
+#include <QuartzCore/QuartzCore.hpp>
 
 namespace SR {
-    void fft(FT::CArray& x, bool inverse);
-    void fftshift(FT::CArray& x);
-    void fft2d(FT::CImage& image, bool inverse);
-    void fftshift2d(FT::CImage& image);
+    void fft(FT::DCArray& x, bool inverse);
+    void fftshift(FT::DCArray& x);
+    void fft2d(FT::DCImage& image, bool inverse);
+    void fftshift2d(FT::DCImage& image);
     cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
 
 namespace MT {
-    void fft(FT::CVector& x, bool inverse);
-    void fftshift(FT::CArray& x);
-    void fft2d(FT::CImage& image, bool inverse);
-    void fftshift2d(FT::CImage& image);
+    void fft(FT::DCVector& x, bool inverse);
+    void fftshift(FT::DCArray& x);
+    void fft2d(FT::DCImage& image, bool inverse);
+    void fftshift2d(FT::DCImage& image);
     cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
 
 namespace OMP {
-    void fft(FT::CArray& x, bool inverse);
-    void fftshift(FT::CArray& x);
-    void fft2d(FT::CImage& image, bool inverse);
-    void fftshift2d(FT::CImage& image);
+    void fft(FT::DCArray& x, bool inverse);
+    void fftshift(FT::DCArray& x);
+    void fft2d(FT::DCImage& image, bool inverse);
+    void fftshift2d(FT::DCImage& image);
     cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
