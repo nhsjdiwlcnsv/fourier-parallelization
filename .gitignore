@@ -36,6 +36,8 @@
 .idea
 .DS_STORE
 opencv
+metal-cpp
+build
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/dictionaries
@@ -43,6 +45,7 @@ opencv
 .idea/jsLibraryMappings.xml
 *.png
 *.jpg
+*.jpeg
 *.tga
 *.bmp
 *.pdf
