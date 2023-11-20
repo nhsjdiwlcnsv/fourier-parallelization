@@ -11,17 +11,23 @@
 #include <vector>
 
 namespace FT {
+    // Base complex type
     using DComplex = std::complex<double>;
-    using DCArray = std::valarray<DComplex>;
-    using DCVector = std::vector<DComplex>;
-
     using FComplex = std::complex<float32_t>;
+
+    // Complex valarray type
+    using DCArray = std::valarray<DComplex>;
     using FCArray = std::valarray<FComplex>;
+
+    // Complex vactor type
+    using DCVector = std::vector<DComplex>;
     using FCVector = std::vector<FComplex>;
 
+    // Complex image type
     using DCImage = std::vector<DCVector>;
     using FCImage = std::vector<FCVector>;
 
+    // Base time unit type
     using TimeUnit = std::chrono::milliseconds;
 }
 

@@ -6,13 +6,12 @@
 #ifndef FOURIER_PARALLELIZATION_FFT_H
 #define FOURIER_PARALLELIZATION_FFT_H
 
+#include "ShaderExecutor.hpp"
 #include "tools.hpp"
-#include <Metal/Metal.hpp>
-#include <Foundation/Foundation.hpp>
-#include <QuartzCore/QuartzCore.hpp>
+
 
 namespace SR {
-    void fft(FT::DCArray& x, bool inverse);
+    void fft(FT::DCVector&x, bool inverse);
     void fftshift(FT::DCArray& x);
     void fft2d(FT::DCImage& image, bool inverse);
     void fftshift2d(FT::DCImage& image);
@@ -21,17 +20,16 @@ namespace SR {
 }
 
 namespace MT {
-    void fft(FT::DCVector& x, bool inverse);
+    void fft(FT::DCVector& x, bool inverse, const std::unique_ptr<FFTExecutor>& shader_executor);
     void fftshift(FT::DCArray& x);
     void fft2d(FT::DCImage& image, bool inverse);
     void fftshift2d(FT::DCImage& image);
-    cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
 
 namespace OMP {
-    void fft(FT::DCArray& x, bool inverse);
-    void fftshift(FT::DCArray& x);
+    void fft(FT::DCVector& x, bool inverse);
+    void fftshift(FT::DCVector& x);
     void fft2d(FT::DCImage& image, bool inverse);
     void fftshift2d(FT::DCImage& image);
     cv::Mat conv2d(cv::Mat& image, cv::Mat& kernel);

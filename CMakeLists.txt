@@ -10,11 +10,13 @@ add_executable(${PROJECT_NAME}
         main.cpp
         nn/AlexNet.cpp
         nn/AlexNet.h
-        functional/fft.cpp
-        functional/fft.hpp
-        functional/tools.cpp
-        functional/tools.hpp
-        functional/types.hpp
+        src/fft.cpp
+        src/fft.hpp
+        src/tools.cpp
+        src/tools.hpp
+        src/types.hpp
+        src/ShaderExecutor.cpp
+        src/ShaderExecutor.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})

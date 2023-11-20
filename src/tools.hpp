@@ -7,6 +7,9 @@
 #define FOURIER_PARALLELIZATION_TOOLS_H
 
 #include <opencv2/opencv.hpp>
+#include <Metal/Metal.hpp>
+#include <Foundation/Foundation.hpp>
+#include <QuartzCore/QuartzCore.hpp>
 #include <iostream>
 #include "types.hpp"
 
@@ -25,8 +28,9 @@ void print(cv::Mat& matrix) {
 }
 
 void print(FT::DCImage & matrix, int mode);
-void CImageToMat(FT::DCImage & src, cv::Mat& dst);
-void MatToCImage(cv::Mat& src, FT::DCImage & dst);
-FT::DCImage gaussian(double mean, double std, int size);
+void DCImageToMat(FT::DCImage & src, cv::Mat& dst);
+void MatToDCImage(cv::Mat& src, FT::DCImage & dst);
+FT::DCVector gaussian(double mean, double std, int size);
+FT::DCImage gaussian2d(double mean, double std, int size);
 
 #endif //FOURIER_PARALLELIZATION_TOOLS_H
