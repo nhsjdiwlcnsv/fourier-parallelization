@@ -8,7 +8,7 @@
 
 #include "ShaderExecutor.hpp"
 #include "tools.hpp"
-
+#include <omp.h>
 
 namespace SR {
     void fft(FT::DCVector&x, bool inverse);

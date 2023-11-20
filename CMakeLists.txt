@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.26)
 
 project(fourier-parallelization)
 
+set(CMAKE_C_COMPILER /opt/homebrew/bin/gcc-13)
+
 find_package(OpenCV REQUIRED)
+find_package(OpenMP REQUIRED)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -25,9 +28,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC metal-cpp/Metal)
 target_include_directories(${PROJECT_NAME} PUBLIC metal-cpp/Foundation)
 target_include_directories(${PROJECT_NAME} PUBLIC metal-cpp/QuartzCore)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+target_link_libraries(${PROJECT_NAME} ${OpenMP_C_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
-
-target_link_libraries(fourier-parallelization
+target_link_libraries(${PROJECT_NAME}
         "-framework Metal"
         "-framework Foundation"
         "-framework QuartzCore"

@@ -268,20 +268,20 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 
 // ========================= NAMESPACE OpenMP (OMP) =========================
 
-// void OMP::fft(FT::CArray& x, bool inverse) {
-// }
-//
-// void OMP::fftshift(FT::CArray& x) {
-// }
-//
-// void OMP::fft2d(FT::CImage& image, bool inverse) {
-// }
-//
-// void OMP::fftshift2d(FT::CImage& image) {
-// }
-//
-// cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
-// }
-//
-// cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
-// }
+void OMP::fft(FT::DCVector& x, bool inverse) {
+}
+
+void OMP::fftshift(FT::DCVector& x) {
+}
+
+void OMP::fft2d(FT::DCImage& image, bool inverse) {
+}
+
+void OMP::fftshift2d(FT::DCImage& image) {
+}
+
+cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
+}
+
+cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+}
