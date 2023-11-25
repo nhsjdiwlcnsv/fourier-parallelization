@@ -6,13 +6,13 @@
 
 
 int main() {
-    cv::Mat image = cv::imread("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/examples/voices.jpeg", cv::IMREAD_GRAYSCALE);
+    cv::Mat image = cv::imread("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/examples/elgato.jpeg", cv::IMREAD_GRAYSCALE);
     cv::Mat imageCopy = image.clone();
     cv::Mat imageCopy1 = image.clone();
     cv::Mat imageCopy2 = image.clone();
     cv::Mat cvKernel(81, 81, CV_64F);
 
-    FT::DCImage kernel = gaussian2d(0, 25, 81);
+    FT::DCImage kernel = gaussian2d(0, 5, 81);
 
     DCImageToMat(kernel, cvKernel);
 

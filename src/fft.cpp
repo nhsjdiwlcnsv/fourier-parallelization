@@ -144,7 +144,6 @@ cv::Mat SR::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     MatToDCImage(padImage, fftImage);    MatToDCImage(padKernel, fftKernel);
 
     fft2d(fftImage, false);             fft2d(fftKernel, false);
-    // fftshift2d(fftImage);                     fftshift2d(fftKernel);
 
     // Element-wise multiplication in frequency domain
     for (int i = 0; i < padRows; ++i)
@@ -203,8 +202,9 @@ void MT::fft2d(FT::DCImage& image, const bool inverse) {
     auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
 
     // Apply FFT along rows
-    for (auto & row : image)
+    for (auto & row : image) {
         fft(row, inverse, shader_executor);
+    }
 
     // Create temporary array to store columns
     FT::DCVector col(image.size());
@@ -213,6 +213,7 @@ void MT::fft2d(FT::DCImage& image, const bool inverse) {
     for (size_t i = 0; i < image.size(); ++i) {
         for (size_t j = 0; j < image.size(); ++j) col[j] = image[j][i];
 
+        // auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
         fft(col, inverse, shader_executor);
 
         for (size_t j = 0; j < image.size(); ++j) image[j][i] = col[j];
@@ -336,11 +337,31 @@ cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     FT::DCImage fftImage(padRows, FT::DCVector(padCols));
     FT::DCImage fftKernel(padRows, FT::DCVector(padCols));
 
-    MatToDCImage(padImage, fftImage);    MatToDCImage(padKernel, fftKernel);
+    #pragma omp parallel
+    {
+        #pragma omp sections
+        {
+            #pragma omp section
+            MatToDCImage(padImage, fftImage);
 
-    fft2d(fftImage, false);             fft2d(fftKernel, false);
+            #pragma omp section
+            MatToDCImage(padKernel, fftKernel);
+        }
+
+        #pragma omp barrier
+
+        #pragma omp sections
+        {
+            #pragma omp section
+            fft2d(fftImage, false);
+
+            #pragma omp section
+            fft2d(fftKernel, false);
+        }
+    }
 
     // Element-wise multiplication in frequency domain
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < padRows; ++i)
         for (int j = 0; j < padCols; ++j)
             fftImage[i][j] *= fftKernel[i][j];
