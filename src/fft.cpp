@@ -187,7 +187,7 @@ void MT::fft(FT::DCVector& x, const bool inverse, const std::unique_ptr<FFTExecu
 
         shader_executor->send_command(x_float.data(), n_threads, thread_size, inverse);
 
-        const auto *x_ptr = shader_executor->exposeXBuffer<FT::FComplex>;
+        const auto *x_ptr = shader_executor->exposeXBuffer<FT::FComplex>();
 
         for (int i = 0; i < n_threads; ++i)
             for (int j = 0; j < thread_size; ++j)
@@ -269,6 +269,96 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 // ========================= NAMESPACE OpenMP (OMP) =========================
 
 void OMP::fft(FT::DCVector& x, bool inverse) {
+    const auto N = x.size(),
+               HN = N / 2;
+
+    if (N <= 1)
+        return;
+
+    const double THETA = (inverse ? 2.0 : -2.0) * M_PI / static_cast<double>(N);
+
+    FT::DCVector even(HN), odd(HN);
+
+    #pragma omp parallel for schedule(static) if (HN >= ENABLE_PARALLEL_FOR_CONDITION)
+    for (auto i = 0; i < HN; ++i) {
+        even[i] = x[i * 2];
+        odd[i] = x[i * 2 + 1];
+    }
+
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        fft(even, inverse);
+
+        #pragma omp section
+        fft(odd, inverse);
+    }
+
+    #pragma omp parallel for schedule(static) if (HN >= ENABLE_PARALLEL_FOR_CONDITION)
+    for (int k = 0; k < HN; ++k) {
+        FT::DComplex t = std::polar(1.0, THETA * k) * odd[k];
+
+        x[k] = even[k] + t;
+        x[k + N / 2] = even[k] - t;
+
+        if (inverse) {
+            x[k] /= 2;
+            x[k + N / 2] /= 2;
+        }
+    }
+
+    // #pragma omp parallel for schedule(static) shared(x, odd, even) private(i) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
+    // for (i = 0; i < HN; ++i) {
+    //     even[i] = x[i * 2];
+    //     odd[i] = x[i * 2 + 1];
+    // }
+    //
+    // fft(even, inverse);     fft(odd, inverse);
+    //
+    // #pragma omp parallel for schedule(static) shared(x, odd, even) private(k) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
+    // for (k = 0; k < HN; ++k) {
+    //     FT::DComplex t = std::polar(1.0, THETA * k) * odd[k];
+    //
+    //     x[k] = even[k] + t;
+    //     x[k + N / 2] = even[k] - t;
+    //
+    //     if (inverse) {
+    //         x[k] /= 2;
+    //         x[k + N / 2] /= 2;
+    //     }
+    // }
+
+    // #pragma omp parallel num_threads(4) shared(x, odd, even) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
+    // {
+    //     omp_set_num_threads(4);
+    //     std::cout << "Filling n = " << omp_get_num_threads() << '\n';
+    //     #pragma omp for
+    //     for (int i = 0; i < HN; ++i) {
+    //         even[i] = x[i * 2];
+    //         odd[i] = x[i * 2 + 1];
+    //     }
+    // }
+
+    // fft(even, inverse);     fft(odd, inverse);
+
+    // #pragma omp parallel num_threads(4) shared(x, odd, even) private(t) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
+    // {
+    //     omp_set_num_threads(4);
+    //
+    //     std::cout << "Computing n = " << omp_get_max_threads() << '\n';
+    //     #pragma omp for
+    //     for (int k = 0; k < HN; ++k) {
+    //         t = std::polar(1.0, THETA * k) * odd[k];
+    //
+    //         x[k] = even[k] + t;
+    //         x[k + N / 2] = even[k] - t;
+    //
+    //         if (inverse) {
+    //             x[k] /= 2;
+    //             x[k + N / 2] /= 2;
+    //         }
+    //     }
+    // }
 }
 
 void OMP::fftshift(FT::DCVector& x) {

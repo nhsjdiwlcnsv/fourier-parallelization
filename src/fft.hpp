@@ -10,6 +10,10 @@
 #include "tools.hpp"
 #include <omp.h>
 
+#define MASTER_THREAD 0
+#define NUM_THREADS 8
+#define ENABLE_PARALLEL_FOR_CONDITION 64 // Empirically obtained number
+
 namespace SR {
     void fft(FT::DCVector&x, bool inverse);
     void fftshift(FT::DCArray& x);
