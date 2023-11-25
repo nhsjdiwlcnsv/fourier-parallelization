@@ -7,9 +7,6 @@
 #define FOURIER_PARALLELIZATION_TOOLS_H
 
 #include <opencv2/opencv.hpp>
-#include <Metal/Metal.hpp>
-#include <Foundation/Foundation.hpp>
-#include <QuartzCore/QuartzCore.hpp>
 #include <iostream>
 #include "types.hpp"
 
