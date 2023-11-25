@@ -4,7 +4,56 @@
 
 #include "fft.hpp"
 
-// ========================= NAMESPACE SERIAL (SRL) =========================
+// ===================================== FFT HELPER FUNCTIONS =====================================
+
+
+void fftshift(FT::DCVector& x) {
+    const auto N = x.size();
+
+    std::ranges::rotate(x, x.begin() + N / 2);
+}
+
+void fftshift2d(FT::DCImage& image) {
+    const auto rows = image.size();
+
+    for (auto & row : image)
+        fftshift(row);
+
+    FT::DCVector col(rows);
+    for (int i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < rows; ++j) col[j] = image[j][i];
+
+        fftshift(col);
+
+        for (size_t j = 0; j < rows; ++j) image[j][i] = col[j];
+    }
+}
+
+cv::Mat pad(cv::Mat& input, const int rows, const int cols, const int value) {
+    CV_Assert(rows >= input.rows && cols >= input.cols);
+
+    const int topPad = (rows - input.rows) / 2,
+              leftPad = (cols - input.cols) / 2;
+
+    cv::Mat paddedImage(rows, cols, input.type(), cv::Scalar(value));
+    input.copyTo(paddedImage(cv::Rect(leftPad, topPad, input.cols, input.rows)));
+
+    return paddedImage;
+}
+
+cv::Mat roi(cv::Mat& src, const int x, const int y, const int width, const int height) {
+    CV_Assert(width <= src.cols && height <= src.rows);
+    CV_Assert(x >= 0 && x <= src.cols && y >= 0 && y <= src.rows);
+
+    const cv::Rect roi(x, y, width, height);
+
+    return src(roi);
+}
+
+
+// ==================================== NAMESPACE SERIAL (SRL) ====================================
+
+
 void SR::fft(FT::DCVector& x, const bool inverse) {
     const auto N = x.size();
 
@@ -35,16 +84,6 @@ void SR::fft(FT::DCVector& x, const bool inverse) {
     }
 }
 
-void SR::fftshift(FT::DCArray& x) {
-    const auto N = x.size();
-    const auto halfN = N / 2;
-
-    FT::DCArray temp(halfN);
-    temp = x[std::slice(0, halfN, 1)];
-    x[std::slice(0, halfN, 1)] = x[std::slice(halfN, N, 1)];
-    x[std::slice(halfN, N, 1)] = temp;
-}
-
 void SR::fft2d(FT::DCImage& image, const bool inverse) {
     // Apply FFT along rows
     for (auto &image_row: image)
@@ -58,28 +97,6 @@ void SR::fft2d(FT::DCImage& image, const bool inverse) {
         fft(col, inverse);
 
         for (size_t j = 0; j < image.size(); ++j)
-            image[j][i] = col[j];
-    }
-}
-
-void SR::fftshift2d(FT::DCImage& image) {
-    const auto rows = image.size(),
-               cols = image[0].size();
-
-    for (int i = 0; i < rows; ++i) {
-        FT::DCArray row(image[i].data(), cols);
-        fftshift(row);
-
-        for (size_t j = 0; j < cols; ++j)
-            image[i][j] = row[j];
-    }
-
-    FT::DCArray col(rows);
-    for (int i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < rows; ++j) col[j] = image[j][i];
-        fftshift(col);
-
-        for (size_t j = 0; j < rows; ++j)
             image[j][i] = col[j];
     }
 }
@@ -146,28 +163,10 @@ cv::Mat SR::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     return result;
 }
 
-cv::Mat pad(cv::Mat& input, int rows, int cols, int value) {
-    CV_Assert(rows >= input.rows && cols >= input.cols);
-
-    const int topPad = (rows - input.rows) / 2,
-              leftPad = (cols - input.cols) / 2;
-
-    cv::Mat paddedImage(rows, cols, input.type(), cv::Scalar(value));
-    input.copyTo(paddedImage(cv::Rect(leftPad, topPad, input.cols, input.rows)));
-
-    return paddedImage;
-}
-
-cv::Mat roi(cv::Mat& src, const int x, const int y, const int width, const int height) {
-    CV_Assert(width <= src.cols && height <= src.rows);
-    CV_Assert(x >= 0 && x <= src.cols && y >= 0 && y <= src.rows);
-
-    const cv::Rect roi(x, y, width, height);
-    return src(roi);
-}
 
 
-// ========================= NAMESPACE METAL (MTL) =========================
+// ===================================== NAMESPACE METAL (MTL) ====================================
+
 
 void MT::fft(FT::DCVector& x, const bool inverse, const std::unique_ptr<FFTExecutor>& shader_executor) {
     const auto N = x.size();
@@ -200,9 +199,6 @@ void MT::fft(FT::DCVector& x, const bool inverse, const std::unique_ptr<FFTExecu
     std::reverse(x.begin() + 1, x.end());
 }
 
-void MT::fftshift(FT::DCArray& x) {
-}
-
 void MT::fft2d(FT::DCImage& image, const bool inverse) {
     auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
 
@@ -221,9 +217,6 @@ void MT::fft2d(FT::DCImage& image, const bool inverse) {
 
         for (size_t j = 0; j < image.size(); ++j) image[j][i] = col[j];
     }
-}
-
-void MT::fftshift2d(FT::DCImage& image) {
 }
 
 cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
@@ -246,7 +239,6 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
     MatToDCImage(padImage, fftImage);    MatToDCImage(padKernel, fftKernel);
 
     fft2d(fftImage, false);             fft2d(fftKernel, false);
-    // SR::fftshift2d(fftImage);                  SR::fftshift2d(fftKernel);
 
     // Element-wise multiplication in frequency domain
     for (int i = 0; i < padRows; ++i)
@@ -255,7 +247,7 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 
     // Inverse FFT to get the result back to spatial domain
     fft2d(fftImage, true);
-    SR::fftshift2d(fftImage);
+    fftshift2d(fftImage);
 
     // Crop the result to the original size
     DCImageToMat(fftImage, result);
@@ -266,9 +258,11 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 }
 
 
-// ========================= NAMESPACE OpenMP (OMP) =========================
 
-void OMP::fft(FT::DCVector& x, bool inverse) {
+// ==================================== NAMESPACE OpenMP (OMP) ====================================
+
+
+void OMP::fft(FT::DCVector& x, const bool inverse) {
     const auto N = x.size(),
                HN = N / 2;
 
@@ -306,72 +300,59 @@ void OMP::fft(FT::DCVector& x, bool inverse) {
             x[k + N / 2] /= 2;
         }
     }
-
-    // #pragma omp parallel for schedule(static) shared(x, odd, even) private(i) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
-    // for (i = 0; i < HN; ++i) {
-    //     even[i] = x[i * 2];
-    //     odd[i] = x[i * 2 + 1];
-    // }
-    //
-    // fft(even, inverse);     fft(odd, inverse);
-    //
-    // #pragma omp parallel for schedule(static) shared(x, odd, even) private(k) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
-    // for (k = 0; k < HN; ++k) {
-    //     FT::DComplex t = std::polar(1.0, THETA * k) * odd[k];
-    //
-    //     x[k] = even[k] + t;
-    //     x[k + N / 2] = even[k] - t;
-    //
-    //     if (inverse) {
-    //         x[k] /= 2;
-    //         x[k + N / 2] /= 2;
-    //     }
-    // }
-
-    // #pragma omp parallel num_threads(4) shared(x, odd, even) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
-    // {
-    //     omp_set_num_threads(4);
-    //     std::cout << "Filling n = " << omp_get_num_threads() << '\n';
-    //     #pragma omp for
-    //     for (int i = 0; i < HN; ++i) {
-    //         even[i] = x[i * 2];
-    //         odd[i] = x[i * 2 + 1];
-    //     }
-    // }
-
-    // fft(even, inverse);     fft(odd, inverse);
-
-    // #pragma omp parallel num_threads(4) shared(x, odd, even) private(t) if (HN > ENABLE_PARALLEL_FOR_CONDITION)
-    // {
-    //     omp_set_num_threads(4);
-    //
-    //     std::cout << "Computing n = " << omp_get_max_threads() << '\n';
-    //     #pragma omp for
-    //     for (int k = 0; k < HN; ++k) {
-    //         t = std::polar(1.0, THETA * k) * odd[k];
-    //
-    //         x[k] = even[k] + t;
-    //         x[k + N / 2] = even[k] - t;
-    //
-    //         if (inverse) {
-    //             x[k] /= 2;
-    //             x[k + N / 2] /= 2;
-    //         }
-    //     }
-    // }
 }
 
-void OMP::fftshift(FT::DCVector& x) {
-}
+void OMP::fft2d(FT::DCImage& image, const bool inverse) {
+    // Apply FFT along rows
+    for (auto &image_row: image)
+        fft(image_row, inverse);
 
-void OMP::fft2d(FT::DCImage& image, bool inverse) {
-}
+    // Create temporary array to store columns
+    FT::DCVector col(image.size());
+    // Apply FFT along columns
+    for (size_t i = 0; i < image.size(); ++i) {
+        for (size_t j = 0; j < image.size(); ++j) col[j] = image[j][i];
+        fft(col, inverse);
 
-void OMP::fftshift2d(FT::DCImage& image) {
-}
-
-cv::Mat OMP::conv2d(cv::Mat& image, cv::Mat& kernel) {
+        for (size_t j = 0; j < image.size(); ++j)
+            image[j][i] = col[j];
+    }
 }
 
 cv::Mat OMP::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
+    CV_Assert(image.channels() == 1 && kernel.channels() == 1);
+
+    // Pad the image and kernel to the nearest power of 2 for FFT
+    int padRows = 2, padCols = 2;
+
+    while (padRows < image.rows) padRows *= 2;
+    while (padCols < image.cols) padCols *= 2;
+
+    cv::Mat result(padRows, padCols, image.type());
+    cv::Mat padImage = pad(image, padRows, padCols, 0);
+    cv::Mat padKernel = pad(kernel, padRows, padCols, 0);
+
+    // Transform image and kernel to frequency domain
+    FT::DCImage fftImage(padRows, FT::DCVector(padCols));
+    FT::DCImage fftKernel(padRows, FT::DCVector(padCols));
+
+    MatToDCImage(padImage, fftImage);    MatToDCImage(padKernel, fftKernel);
+
+    fft2d(fftImage, false);             fft2d(fftKernel, false);
+
+    // Element-wise multiplication in frequency domain
+    for (int i = 0; i < padRows; ++i)
+        for (int j = 0; j < padCols; ++j)
+            fftImage[i][j] *= fftKernel[i][j];
+
+    // Inverse FFT to get the result back to spatial domain
+    fft2d(fftImage, true);
+    fftshift2d(fftImage);
+
+    // Crop the result to the original size
+    DCImageToMat(fftImage, result);
+
+    result = roi(result, (padCols - image.cols) / 2, (padRows - image.rows) / 2, image.cols, image.rows);
+
+    return result;
 }

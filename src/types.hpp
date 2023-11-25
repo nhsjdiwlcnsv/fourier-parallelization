@@ -15,10 +15,6 @@ namespace FT {
     using DComplex = std::complex<double>;
     using FComplex = std::complex<float32_t>;
 
-    // Complex valarray type
-    using DCArray = std::valarray<DComplex>;
-    using FCArray = std::valarray<FComplex>;
-
     // Complex vactor type
     using DCVector = std::vector<DComplex>;
     using FCVector = std::vector<FComplex>;

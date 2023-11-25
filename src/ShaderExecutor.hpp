@@ -1,6 +1,8 @@
 //
 // Created by Mikhail Shkarubski on 19.11.23.
 //
+#pragma once
+
 #include "tools.hpp"
 #include <Metal/Metal.hpp>
 #include <Foundation/Foundation.hpp>
