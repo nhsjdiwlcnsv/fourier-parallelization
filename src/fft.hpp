@@ -27,7 +27,7 @@ namespace SR {
 }
 
 namespace MT {
-    void fft(FT::DCVector& x, bool inverse, const std::unique_ptr<FFTExecutor>& shader_executor);
+    void fft(FT::DCVector& x, bool inverse, const std::unique_ptr<FFTExecutor>&shader_executor);
     void fft2d(FT::DCImage& image, bool inverse);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
@@ -37,5 +37,6 @@ namespace OMP {
     void fft2d(FT::DCImage& image, bool inverse);
     cv::Mat conv2dfft(cv::Mat& image, cv::Mat& kernel);
 }
+
 
 #endif //FOURIER_PARALLELIZATION_FFT_H

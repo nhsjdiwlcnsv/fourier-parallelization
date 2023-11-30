@@ -199,25 +199,95 @@ void MT::fft(FT::DCVector& x, const bool inverse, const std::unique_ptr<FFTExecu
 }
 
 void MT::fft2d(FT::DCImage& image, const bool inverse) {
-    auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
+    NS::Error                 *error                 = nullptr;
+    MTL::Device               *device                = MTL::CreateSystemDefaultDevice();
+    MTL::Library              *library               = device->newLibrary(NS::String::string("/Users/mishashkarubski/CLionProjects/fourier-parallelization/metal-library/library.metallib", NS::ASCIIStringEncoding), &error);
+    MTL::Function             *function              = library->newFunction(NS::String::string("fft2d", NS::ASCIIStringEncoding));
+    MTL::CommandQueue         *command_queue         = device->newCommandQueue();
+    MTL::ComputePipelineState *pipeline_state        = device->newComputePipelineState(function, &error);
 
+    library->release();
+    function->release();
+
+    const size_t nRows = image.size();
+    const size_t nCols = image[0].size();
+
+    FT::FCVector x_flattened(nRows * nCols);
+
+    for (int i = 0; i < nRows; ++i)
+        for (int j = 0; j < nCols; ++j)
+            x_flattened[i * nCols + j] = static_cast<FT::FComplex>(image[i][j]);
+
+    MTL::Buffer *x_buffer                            = device->newBuffer(x_flattened.data(), nRows * nCols * sizeof(FT::FComplex), MTL::StorageModeShared);
+    MTL::Buffer *n_rows_buffer                       = device->newBuffer(&nRows, sizeof(size_t), MTL::StorageModeShared);
+    MTL::Buffer *n_cols_buffer                       = device->newBuffer(&nCols, sizeof(size_t), MTL::StorageModeShared);
+    MTL::Buffer *inv_buffer                          = device->newBuffer(&inverse, sizeof(bool), MTL::StorageModeShared);
+    MTL::Buffer *column_buffer                       = device->newBuffer(nCols * nRows * sizeof(FT::FComplex), MTL::StorageModeShared);
+    MTL::Buffer *odd_buffer                          = device->newBuffer(nCols * nRows * sizeof(FT::FComplex) / 2, MTL::StorageModeShared);
+    MTL::Buffer *even_buffer                         = device->newBuffer(nCols * nRows * sizeof(FT::FComplex) / 2, MTL::StorageModeShared);
+
+    auto *command_buffer                             = command_queue->commandBuffer();
+    auto *command_encoder                            = command_buffer->computeCommandEncoder();
+
+    command_encoder->setBuffer(x_buffer,      0, 0);
+    command_encoder->setBuffer(n_rows_buffer, 0, 1);
+    command_encoder->setBuffer(n_cols_buffer, 0, 2);
+    command_encoder->setBuffer(inv_buffer,    0, 3);
+    command_encoder->setBuffer(column_buffer, 0, 4);
+    command_encoder->setBuffer(odd_buffer,    0, 5);
+    command_encoder->setBuffer(even_buffer,   0, 6);
+
+    command_encoder->setComputePipelineState(pipeline_state);
+
+    const NS::UInteger maxThreadsPerGroup        = std::min(std::max(nRows, nCols), pipeline_state->maxTotalThreadsPerThreadgroup());
+    const MTL::Size threadsPerGroup              = MTL::Size::Make(maxThreadsPerGroup, 1, 1);
+    const MTL::Size threadsPerGrid               = MTL::Size::Make(maxThreadsPerGroup, 1, 1);
+
+    command_encoder->dispatchThreads(threadsPerGrid, threadsPerGroup);
+    command_encoder->endEncoding();
+
+    command_buffer->commit();
+    command_buffer->waitUntilCompleted();
+
+    const auto *x_data = static_cast<FT::FComplex*>(x_buffer->contents());
+    const auto *odd_data = static_cast<FT::FComplex*>(x_buffer->contents());
+
+    for (int i = 0; i < nRows; ++i)
+        for (int j = 0; j < nCols; ++j)
+            image[i][j] = x_data[i * nCols + j];
+
+    error->release();
+    device->release();
+    command_queue->release();
+    pipeline_state->release();
+
+    x_buffer->release();
+    n_rows_buffer->release();
+    n_cols_buffer->release();
+    inv_buffer->release();
+    column_buffer->release();
+    odd_buffer->release();
+    even_buffer->release();
+
+    // auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
+    //
     // Apply FFT along rows
-    for (auto & row : image) {
-        fft(row, inverse, shader_executor);
-    }
-
-    // Create temporary array to store columns
-    FT::DCVector col(image.size());
-
-    // Apply FFT along columns
-    for (size_t i = 0; i < image.size(); ++i) {
-        for (size_t j = 0; j < image.size(); ++j) col[j] = image[j][i];
-
-        // auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
-        fft(col, inverse, shader_executor);
-
-        for (size_t j = 0; j < image.size(); ++j) image[j][i] = col[j];
-    }
+    // for (auto & row : image) {
+    //     fft(row, inverse, shader_executor);
+    // }
+    //
+    // // Create temporary array to store columns
+    // FT::DCVector col(image.size());
+    //
+    // // Apply FFT along columns
+    // for (size_t i = 0; i < image.size(); ++i) {
+    //     for (size_t j = 0; j < image.size(); ++j) col[j] = image[j][i];
+    //
+    //     // auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
+    //     fft(col, inverse, shader_executor);
+    //
+    //     for (size_t j = 0; j < image.size(); ++j) image[j][i] = col[j];
+    // }
 }
 
 cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
@@ -239,7 +309,7 @@ cv::Mat MT::conv2dfft(cv::Mat& image, cv::Mat& kernel) {
 
     MatToDCImage(padImage, fftImage);    MatToDCImage(padKernel, fftKernel);
 
-    fft2d(fftImage, false);             fft2d(fftKernel, false);
+    fft2d(fftImage, false);              fft2d(fftKernel, false);
 
     // Element-wise multiplication in frequency domain
     for (int i = 0; i < padRows; ++i)

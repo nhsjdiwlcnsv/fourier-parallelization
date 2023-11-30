@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        nn/AlexNet.cpp
-        nn/AlexNet.h
         src/fft.cpp
         src/fft.hpp
         src/tools.cpp
@@ -18,6 +16,7 @@ add_executable(${PROJECT_NAME}
         src/types.hpp
         src/ShaderExecutor.cpp
         src/ShaderExecutor.hpp
+        benchmark/benchmark.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})

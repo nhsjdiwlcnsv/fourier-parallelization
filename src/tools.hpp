@@ -8,6 +8,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <fstream>
 #include "types.hpp"
 
 #define REAL_ONLY 0
@@ -29,5 +30,6 @@ void DCImageToMat(FT::DCImage & src, cv::Mat& dst);
 void MatToDCImage(cv::Mat& src, FT::DCImage & dst);
 FT::DCVector gaussian(double mean, double std, int size);
 FT::DCImage gaussian2d(double mean, double std, int size);
+
 
 #endif //FOURIER_PARALLELIZATION_TOOLS_H

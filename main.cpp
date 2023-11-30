@@ -2,50 +2,69 @@
 #define MTL_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
 
-#include "src/fft.hpp"
+#include "benchmark/benchmark.hpp"
 
 
 int main() {
-    cv::Mat image = cv::imread("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/examples/elgato.jpeg", cv::IMREAD_GRAYSCALE);
-    cv::Mat imageCopy = image.clone();
-    cv::Mat imageCopy1 = image.clone();
-    cv::Mat imageCopy2 = image.clone();
-    cv::Mat cvKernel(81, 81, CV_64F);
+    // benchmark(1024, 4096 * 4096, 0, "fft_1");
+    benchmark(256, 8192, 1, "fft2d_1");
+    // benchmark(256, 4096, 2, "conv_4");
 
-    FT::DCImage kernel = gaussian2d(0, 5, 81);
+    // cv::Mat image = cv::imread("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/examples/voices.jpeg", cv::IMREAD_GRAYSCALE);
+    //
+    // auto padImage = pad(image, 512, 512, 0);
+    //
+    // FT::DCImage dc_image(512, FT::DCVector(512));
+    //
+    // MatToDCImage(padImage, dc_image);
+    //
+    // MT::fft2d(dc_image, false);
+    // MT::fft2d(dc_image, true);
+    //
+    // DCImageToMat(dc_image, padImage);
+    // padImage = roi(padImage, 7, 7, 498, 498);
+    //
+    // cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/fuck.jpg", padImage);
 
-    DCImageToMat(kernel, cvKernel);
-
-    // Calculate the duration
-    auto start1 = std::chrono::high_resolution_clock::now();
-    const cv::Mat convImage = SR::conv2d(image, cvKernel);
-    auto end1 = std::chrono::high_resolution_clock::now();
-    cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result1.jpg", convImage);
-
-    auto start2 = std::chrono::high_resolution_clock::now();
-    const cv::Mat convImage2 = SR::conv2dfft(imageCopy, cvKernel);
-    auto end2 = std::chrono::high_resolution_clock::now();
-    cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result2.jpg", convImage2);
-
-    auto start3 = std::chrono::high_resolution_clock::now();
-    const cv::Mat convImage3 = MT::conv2dfft(imageCopy1, cvKernel);
-    auto end3 = std::chrono::high_resolution_clock::now();
-    cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result3.jpg", convImage3);
-
-    auto start4 = std::chrono::high_resolution_clock::now();
-    const cv::Mat convImage4 = OMP::conv2dfft(imageCopy2, cvKernel);
-    auto end4 = std::chrono::high_resolution_clock::now();
-    cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result4.jpg", convImage4);
-
-    auto duration1 = std::chrono::duration_cast<FT::TimeUnit>(end1 - start1);
-    auto duration2 = std::chrono::duration_cast<FT::TimeUnit>(end2 - start2);
-    auto duration3 = std::chrono::duration_cast<FT::TimeUnit>(end3 - start3);
-    auto duration4 = std::chrono::duration_cast<FT::TimeUnit>(end4 - start4);
-
-    std::cout << "Naive convolution took " << duration1.count() << "ms to execute." << '\n';
-    std::cout << "FFT convolution (Serial) took " << duration2.count() << "ms to execute." << '\n';
-    std::cout << "FFT convolution (Metal) took " << duration3.count() << "ms to execute." << '\n';
-    std::cout << "FFT convolution (OpenMP) took " << duration4.count() << "ms to execute." << '\n';
+    // cv::Mat imageCopy = image.clone();
+    // cv::Mat imageCopy1 = image.clone();
+    // cv::Mat imageCopy2 = image.clone();
+    // cv::Mat cvKernel(7, 7, CV_64F);
+    //
+    // FT::DCImage kernel = gaussian2d(0, 25, 7);
+    //
+    // DCImageToMat(kernel, cvKernel);
+    //
+    // // Calculate the duration
+    // auto start1 = std::chrono::high_resolution_clock::now();
+    // const cv::Mat convImage = SR::conv2d(image, cvKernel);
+    // auto end1 = std::chrono::high_resolution_clock::now();
+    // cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result1.jpg", convImage);
+    //
+    // auto start2 = std::chrono::high_resolution_clock::now();
+    // const cv::Mat convImage2 = SR::conv2dfft(imageCopy, cvKernel);
+    // auto end2 = std::chrono::high_resolution_clock::now();
+    // cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result2.jpg", convImage2);
+    //
+    // auto start3 = std::chrono::high_resolution_clock::now();
+    // const cv::Mat convImage3 = MT::conv2dfft(imageCopy1, cvKernel);
+    // auto end3 = std::chrono::high_resolution_clock::now();
+    // cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result3.jpg", convImage3);
+    //
+    // auto start4 = std::chrono::high_resolution_clock::now();
+    // const cv::Mat convImage4 = OMP::conv2dfft(imageCopy2, cvKernel);
+    // auto end4 = std::chrono::high_resolution_clock::now();
+    // cv::imwrite("/Users/mishashkarubski/CLionProjects/fourier-parallelization/public/results/result4.jpg", convImage4);
+    //
+    // auto duration1 = std::chrono::duration_cast<FT::TimeUnit>(end1 - start1);
+    // auto duration2 = std::chrono::duration_cast<FT::TimeUnit>(end2 - start2);
+    // auto duration3 = std::chrono::duration_cast<FT::TimeUnit>(end3 - start3);
+    // auto duration4 = std::chrono::duration_cast<FT::TimeUnit>(end4 - start4);
+    //
+    // std::cout << "Naive convolution took " << duration1.count() << "ms to execute." << '\n';
+    // std::cout << "FFT convolution (Serial) took " << duration2.count() << "ms to execute." << '\n';
+    // std::cout << "FFT convolution (Metal) took " << duration3.count() << "ms to execute." << '\n';
+    // std::cout << "FFT convolution (OpenMP) took " << duration4.count() << "ms to execute." << '\n';
 
     // auto const shader_executor = std::make_unique<FFTExecutor>(NS::String::string("fft", NS::ASCIIStringEncoding));
     //

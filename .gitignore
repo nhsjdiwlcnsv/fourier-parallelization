@@ -43,11 +43,6 @@ build
 .idea/dictionaries
 .idea/vcs.xml
 .idea/jsLibraryMappings.xml
-*.png
-*.jpg
-*.jpeg
-*.tga
-*.bmp
 *.pdf
 cmake-build-debug
 cmake-build-release

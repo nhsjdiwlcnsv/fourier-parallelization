@@ -2,6 +2,8 @@
 // Created by Mikhail Shkarubski on 13.11.23.
 //
 #include "tools.hpp"
+#include "fft.hpp"
+
 
 void print(const FT::DCImage& matrix, const int mode) {
     assert(mode == REAL_ONLY || mode == IMAG_ONLY || mode == REAL_IMAG);

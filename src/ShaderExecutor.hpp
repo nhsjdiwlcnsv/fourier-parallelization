@@ -21,6 +21,7 @@ protected:
     NS::String *lib_path_ = NS::String::string("/Users/mishashkarubski/CLionProjects/fourier-parallelization/metal-library/library.metallib", NS::ASCIIStringEncoding);
 };
 
+
 class FFTExecutor : ShaderExecutor {
 public:
     explicit FFTExecutor(const NS::String *shader_name);
@@ -36,11 +37,11 @@ public:
     const T* exposeInvBuffer();
 
 private:
-    MTL::Buffer *x_buffer_;
-    MTL::Buffer *th_sz_buffer_;
-    MTL::Buffer *inv_buffer_;
-    MTL::Buffer *even_buffer_;
-    MTL::Buffer *odd_buffer_;
+    MTL::Buffer *x_buffer_                          = nullptr;
+    MTL::Buffer *th_sz_buffer_                      = nullptr;
+    MTL::Buffer *inv_buffer_                        = nullptr;
+    MTL::Buffer *even_buffer_                       = nullptr;
+    MTL::Buffer *odd_buffer_                        = nullptr;
 };
 
 template<typename T>
@@ -57,6 +58,29 @@ template<typename T>
 const T* FFTExecutor::exposeInvBuffer() {
     return static_cast<T*>(inv_buffer_->contents());
 }
+
+
+// class FFT2DExecutor : ShaderExecutor{
+// public:
+//     explicit FFT2DExecutor(const NS::String *shader_name);
+//     ~FFT2DExecutor();
+//
+//     void send_command(const FT::FComplex* x, size_t n_threads, const size_t& thread_size, const bool& inv);
+//
+//     template <typename T>
+//     const T* exposeXBuffer();
+//     template <typename T>
+//     const T* exposeThSzBuffer();
+//     template <typename T>
+//     const T* exposeInvBuffer();
+//
+// private:
+//     MTL::Buffer *x_buffer_                          = nullptr;
+//     MTL::Buffer *th_sz_buffer_                      = nullptr;
+//     MTL::Buffer *inv_buffer_                        = nullptr;
+//     MTL::Buffer *even_buffer_                       = nullptr;
+//     MTL::Buffer *odd_buffer_                        = nullptr;
+// };
 
 
 #endif //SHADEREXECUTOR_H
